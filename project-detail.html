@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Orbis Project Detail — In-depth Case Study" />
+  <title>Orbis — Case Study Detail</title>
+
+  <!-- Preconnect for fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+  <!-- Base Styling -->
+  <link rel="stylesheet" href="css/style.css" />
+
+  <!-- GSAP CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+
+  <style>
+    body {
+      background-color: #080A0F;
+      color: #E8EAF0;
+      min-height: 100vh;
+      overflow-x: hidden;
+      cursor: none;
+    }
+
+    /* ── Detail Page Styling ──────────────────────────────── */
+    .detail-hero {
+      position: relative;
+      width: 100%;
+      height: 60vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      background: linear-gradient(135deg, #1e1b4b 0%, #311042 50%, #4c1d95 100%);
+      padding: 0 2rem;
+      overflow: hidden;
+      border-bottom: 1px solid var(--clr-border);
+    }
+
+    .detail-hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at center, rgba(8, 10, 15, 0) 20%, rgba(8, 10, 15, 0.85) 100%);
+      pointer-events: none;
+    }
+
+    .detail-hero-inner {
+      position: relative;
+      z-index: 2;
+      max-width: 900px;
+      opacity: 0;
+      transform: translateY(30px);
+    }
+
+    .detail-tag {
+      font-family: var(--font-display);
+      font-size: 0.8rem;
+      font-weight: 600;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--clr-accent);
+      margin-bottom: 1.5rem;
+      display: inline-block;
+    }
+
+    .detail-title {
+      font-family: var(--font-display);
+      font-size: clamp(2.8rem, 7vw, 5rem);
+      font-weight: 700;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+      color: #FFF;
+      margin-bottom: 1.5rem;
+    }
+
+    .detail-tagline {
+      font-size: 1.25rem;
+      color: rgba(232, 234, 240, 0.8);
+      max-width: 600px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+
+    /* ── Content Grid ─────────────────────────────────────── */
+    .detail-container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 6rem 2rem;
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 5rem;
+      position: relative;
+      z-index: 10;
+    }
+
+    .detail-main {
+      display: flex;
+      flex-direction: column;
+      gap: 3.5rem;
+      opacity: 0;
+      transform: translateY(30px);
+    }
+
+    .detail-section h2 {
+      font-family: var(--font-display);
+      font-size: 1.8rem;
+      font-weight: 700;
+      letter-spacing: -0.015em;
+      color: #FFF;
+      margin-bottom: 1.2rem;
+      position: relative;
+      display: inline-block;
+    }
+
+    .detail-section h2::after {
+      content: '';
+      position: absolute;
+      bottom: -6px;
+      left: 0;
+      width: 40px;
+      height: 2px;
+      background: var(--clr-violet);
+    }
+
+    .detail-section p {
+      font-size: 1.05rem;
+      color: var(--clr-muted);
+      line-height: 1.8;
+    }
+
+    /* Stats Sidebar */
+    .detail-sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: 2.5rem;
+      opacity: 0;
+      transform: translateY(30px);
+    }
+
+    .sidebar-widget {
+      background: var(--clr-surface);
+      border: 1px solid var(--clr-border);
+      border-radius: 16px;
+      padding: 2rem;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    }
+
+    .sidebar-widget-title {
+      font-family: var(--font-display);
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--clr-muted);
+      margin-bottom: 1.5rem;
+      border-bottom: 1px solid var(--clr-border);
+      padding-bottom: 0.75rem;
+    }
+
+    .detail-stats-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 1.8rem;
+    }
+
+    .detail-stat-item {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .detail-stat-num {
+      font-family: var(--font-display);
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: var(--clr-accent);
+      line-height: 1.1;
+      background: linear-gradient(135deg, #E8EAF0 0%, #A78BFA 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .detail-stat-label {
+      font-size: 0.8rem;
+      color: var(--clr-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-top: 0.3rem;
+    }
+
+    /* ── Navigation Buttons ───────────────────────────────── */
+    .nav-actions {
+      display: flex;
+      gap: 1rem;
+      margin-top: 2rem;
+    }
+
+    .btn-back {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.85rem 1.8rem;
+      background: transparent;
+      border: 1px solid var(--clr-border);
+      color: var(--clr-text);
+      text-decoration: none;
+      border-radius: 6px;
+      font-family: var(--font-display);
+      font-size: 0.85rem;
+      font-weight: 500;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      transition: border-color 0.3s, background 0.3s, color 0.3s;
+      cursor: none;
+    }
+
+    .btn-back:hover {
+      border-color: var(--clr-violet);
+      background: var(--clr-violet-dim);
+      color: #FFF;
+    }
+
+    .btn-back svg {
+      transition: transform 0.3s;
+    }
+
+    .btn-back:hover svg {
+      transform: translateX(-4px);
+    }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+      .detail-container {
+        grid-template-columns: 1fr;
+        gap: 4rem;
+        padding: 4rem 2rem;
+      }
+      .detail-hero {
+        height: 50vh;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Custom Cursor -->
+  <div id="cursor" aria-hidden="true"></div>
+  <div id="cursor-ring" aria-hidden="true"></div>
+
+  <!-- Navigation (Goes back to main site relatively) -->
+  <nav role="navigation" aria-label="Main navigation">
+    <a href="index.html#hero" class="nav-logo" aria-label="Orbis home">
+      <img src="assets/orbis_logo.jpg" alt="Orbis logo" />
+      <span>ORBIS</span>
+    </a>
+
+    <ul class="nav-links" role="list">
+      <li><a href="index.html#about">About</a></li>
+      <li><a href="index.html#services">Services</a></li>
+      <li><a href="projects.html">Projects</a></li>
+      <li><a href="index.html#process">Process</a></li>
+      <li><a href="index.html#contact">Contact</a></li>
+    </ul>
+
+    <a href="index.html#contact" class="nav-cta">Get Started</a>
+
+    <button class="nav-toggle" aria-label="Toggle navigation" aria-expanded="false" aria-controls="nav-links">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+  </nav>
+
+  <!-- Hero Background Header -->
+  <section class="detail-hero" id="detail-hero-bg" aria-label="Project Hero">
+    <div class="detail-hero-inner" id="hero-content">
+      <span class="detail-tag" id="proj-category">Branding & Identity</span>
+      <h1 class="detail-title" id="proj-title">Nova Branding</h1>
+      <p class="detail-tagline" id="proj-tagline">A new identity for a cosmic fintech giant</p>
+    </div>
+  </section>
+
+  <!-- Content Section -->
+  <div class="detail-container">
+    <main class="detail-main" id="main-content">
+      <section class="detail-section">
+        <h2>Challenge & Objective</h2>
+        <p id="proj-challenge">
+          Fintech branding is traditionally conservative, boring, and fails to engage Gen-Z and millennial investors. Nova wanted to break the mold while maintaining credibility and security.
+        </p>
+      </section>
+
+      <section class="detail-section">
+        <h2>Strategic Execution</h2>
+        <p id="proj-strategy">
+          We designed a full brand system inspired by deep space gravity. This included an updated logotype, custom orbit-themed iconography, a palette of hyper-violet and neon green, and a brand voice that is clear, bold, and futuristic.
+        </p>
+      </section>
+
+      <section class="detail-section">
+        <h2>Project Impact</h2>
+        <p id="proj-impact">
+          The brand identity successfully elevated Nova's profile, making them the most discussed fintech startup of the quarter. Users highly praised the clean mobile app layout and the immersive onboarding animations, establishing them as industry leaders.
+        </p>
+      </section>
+
+      <div class="nav-actions">
+        <a href="projects.html" class="btn-back">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+          </svg>
+          Back to Projects
+        </a>
+      </div>
+    </main>
+
+    <!-- Sidebar Stats -->
+    <aside class="detail-sidebar" id="sidebar-content">
+      <div class="sidebar-widget">
+        <h3 class="sidebar-widget-title">Key Performance Indicators</h3>
+        <div class="detail-stats-grid">
+          
+          <div class="detail-stat-item">
+            <span class="detail-stat-num" id="stat1-val">0</span>
+            <span class="detail-stat-label" id="stat1-lbl">User Acquisition</span>
+          </div>
+
+          <div class="detail-stat-item">
+            <span class="detail-stat-num" id="stat2-val">0</span>
+            <span class="detail-stat-label" id="stat2-lbl">Funding Raised</span>
+          </div>
+
+          <div class="detail-stat-item">
+            <span class="detail-stat-num" id="stat3-val">0</span>
+            <span class="detail-stat-label" id="stat3-lbl">Brand Recall</span>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="sidebar-widget">
+        <h3 class="sidebar-widget-title">Services Provided</h3>
+        <p id="proj-services" style="font-size: 0.95rem; color: var(--clr-muted); line-height: 1.6;"></p>
+      </div>
+    </aside>
+  </div>
+
+  <script type="module">
+    // Case Study Database
+    const CASE_STUDIES = {
+      nova: {
+        title: "Nova Branding",
+        category: "Branding & Identity",
+        tagline: "A cosmic brand system crafted for a fintech pioneer",
+        challenge: "Fintech branding is traditionally conservative, corporate, and fails to emotionally engage younger generations of retail investors. Nova wanted to disrupt the market and position itself as a stellar brand, without losing the trust associated with financial security.",
+        strategy: "We developed a full brand system inspired by gravitational orbits. This system centered around a custom geometry logotype, high-end WebGL interface prototypes, a palette of deep galaxy indigos paired with toxic violet and solar yellow accents, and a brand voice that is clear, cosmic, and transparent.",
+        impact: "The rebrand transformed Nova's market position overnight. Within 3 months of launch, customer acquisition increased by 140% organically. The visual excellence of their brand materials allowed them to close their $45M Series B with key venture funds.",
+        gradient: "linear-gradient(135deg, #0e072b 0%, #2b0c3a 50%, #581c87 100%)",
+        services: "Brand Positioning, Visual Identity, Motion Systems, Interface Design, Iconography System",
+        stats: [
+          { val: "140%", lbl: "User Acquisition" },
+          { val: "$45M", lbl: "Series B Secured" },
+          { val: "92%", lbl: "Brand Recall Rate" }
+        ]
+      },
+      aether: {
+        title: "Aether Campaign",
+        category: "Paid Acquisition",
+        tagline: "Scaling SaaS ARR through automated creative pipelines",
+        challenge: "Aether was operating in a highly saturated B2B cloud-storage market. Their customer acquisition cost (CAC) was steadily increasing, while lead quality was declining, resulting in stagnant monthly recurring revenue.",
+        strategy: "We built an automated creative production pipeline that deployed over 200 distinct ad variations targeting specific developer personas. We leveraged Meta and LinkedIn custom audience graphs, paired with structured bidding algorithms that optimized directly for high-LTV contract conversions.",
+        impact: "Reconstructed their acquisition model entirely. Within six months, we delivered a 4.2x ROAS on LinkedIn and reduced average Cost Per Acquisition by 38%, which unlocked over $10M in Annual Recurring Revenue (ARR).",
+        gradient: "linear-gradient(135deg, #021a36 0%, #0d2847 50%, #1e40af 100%)",
+        services: "Paid Ads Management, Creative Direction, A/B Testing, Conversion Funnel Auditing",
+        stats: [
+          { val: "4.2x", lbl: "Campaign ROAS" },
+          { val: "-38%", lbl: "CPA Reduction" },
+          { val: "$10M+", lbl: "Annual Recurring Revenue" }
+        ]
+      },
+      pulse: {
+        title: "Pulse Social",
+        category: "Social Growth",
+        tagline: "Viral loop architectures for direct-to-consumer commerce",
+        challenge: "Pulse, an emerging sustainable footwear label, had no organic brand equity. Paid ads were performing poorly, and they needed a way to build a highly active, direct community of fans without relying solely on large marketing spends.",
+        strategy: "We established a high-velocity organic content strategy focusing on TikTok and Instagram Reels. We created short-form series that aligned product features with trending cultural themes and initiated a creator seeding program that placed products with 150+ micro-influencers.",
+        impact: "Our campaigns generated over 8 million views in two months. The organic interest led to a massive +280% spike in Shopify referral traffic and secured 45,000 highly engaged, loyal followers.",
+        gradient: "linear-gradient(135deg, #26053b 0%, #4a044e 50%, #701a75 100%)",
+        services: "Content Strategy, Video Production, Creator Seeding, Community Management",
+        stats: [
+          { val: "8M+", lbl: "Views Generated" },
+          { val: "+280%", lbl: "Shopify Referral Sales" },
+          { val: "45K", lbl: "New Organic Followers" }
+        ]
+      },
+      horizon: {
+        title: "Horizon Web",
+        category: "Immersive Web",
+        tagline: "WebGL solar narrative for global tech scaling",
+        challenge: "Horizon was presenting a complex, highly technical grid balancing solar system to clean-energy investors. Traditional PDF decks and static text landing pages failed to capture the product's genius or retain user interest.",
+        strategy: "We designed a high-fidelity WebGL landing page utilizing Three.js and custom GLSL vertex shaders. As users scroll, they navigate through a live, interactive 3D particle simulation of energy transfers, making complex data immediately understandable.",
+        impact: "The interactive site completely replaced their investor deck. Time on site increased to over 4 minutes, and lead submissions grew by 45% within the first month. The site also achieved a 99.8% performance score.",
+        gradient: "linear-gradient(135deg, #02251a 0%, #064e3b 50%, #0f766e 100%)",
+        services: "Creative Development, WebGL & Shaders, Scroll Animation Design, Performance Tuning",
+        stats: [
+          { val: "+45%", lbl: "Lead Conversion Rate" },
+          { val: "4:12", lbl: "Average Session Time" },
+          { val: "99%", lbl: "Lighthouse Performance" }
+        ]
+      },
+      solaria: {
+        title: "Solaria Content",
+        category: "Creative Direction",
+        tagline: "Capturing the serene orbit of luxury eco-living",
+        challenge: "Solaria, a secluded ultra-luxury resort, needed to generate off-season bookings. Standard luxury stock photos felt cold and failed to convey the resort's deep integration with pristine nature and its architectural poetry.",
+        strategy: "We sent an on-site production team to capture custom drone cinematic footage, atmospheric slow-motion videos, and natural light photography. We then structured these into a curated series of social campaigns and paid video placements.",
+        impact: "The visual campaign successfully built an emotional connection with travelers. The resort booked 100% of their off-season villas within four weeks of campaigns going live, alongside a 65% boost in social media engagements.",
+        gradient: "linear-gradient(135deg, #1c1510 0%, #451a03 50%, #78350f 100%)",
+        services: "Cinematic Videography, Lifestyle Photography, Campaign Strategy, Media Buying",
+        stats: [
+          { val: "100%", lbl: "Villa Bookings Secured" },
+          { val: "+65%", lbl: "Video Engagement" },
+          { val: "20+", lbl: "Press Features" }
+        ]
+      },
+      apex: {
+        title: "Apex Strategy",
+        category: "Growth Consulting",
+        tagline: "Positioning an AI pioneer for venture funding",
+        challenge: "Apex had built a state-of-the-art enterprise LLM fine-tuning product. However, their sales materials were overly technical, and they struggled to convey their commercial market opportunity to traditional venture capitalists.",
+        strategy: "Acting as fractional CMOs, we conducted comprehensive client interviews, analyzed competitor positioning, restructured their value proposition into simple business outcomes, and redesigned their investor decks.",
+        impact: "We streamlined their narrative from raw API tech to enterprise scale acceleration. Apex completed their seed round raising $15M from tier-one funds just three months after launching the new strategy.",
+        gradient: "linear-gradient(135deg, #050514 0%, #1e1b4b 50%, #3b0764 100%)",
+        services: "Fractional CMO, Market Positioning, Go-to-Market Strategy, Pitch Deck Advisory",
+        stats: [
+          { val: "$15M", lbl: "Seed Funding Secured" },
+          { val: "4", lbl: "Enterprise Partners" },
+          { val: "3M", lbl: "Pitch to Close Time" }
+        ]
+      }
+    };
+
+    // Load Project Content Dynamic
+    document.addEventListener('DOMContentLoaded', () => {
+      // Get URL project id
+      const params = new URLSearchParams(window.location.search);
+      const projId = params.get('id') || 'nova';
+      
+      const data = CASE_STUDIES[projId] || CASE_STUDIES['nova'];
+      
+      // Update HTML elements
+      document.getElementById('proj-category').textContent = data.category;
+      document.getElementById('proj-title').textContent = data.title;
+      document.getElementById('proj-tagline').textContent = data.tagline;
+      document.getElementById('proj-challenge').textContent = data.challenge;
+      document.getElementById('proj-strategy').textContent = data.strategy;
+      document.getElementById('proj-impact').textContent = data.impact;
+      document.getElementById('proj-services').textContent = data.services;
+      
+      // Update stats
+      document.getElementById('stat1-val').textContent = data.stats[0].val;
+      document.getElementById('stat1-lbl').textContent = data.stats[0].lbl;
+      document.getElementById('stat2-val').textContent = data.stats[1].val;
+      document.getElementById('stat2-lbl').textContent = data.stats[1].lbl;
+      document.getElementById('stat3-val').textContent = data.stats[2].val;
+      document.getElementById('stat3-lbl').textContent = data.stats[2].lbl;
+      
+      // Update hero gradient
+      document.getElementById('detail-hero-bg').style.background = data.gradient;
+
+      // GSAP Entrance Animations
+      const tl = gsap.timeline();
+      tl.to('#hero-content', { opacity: 1, y: 0, duration: 1.2, ease: 'power3.out' })
+        .to('#main-content', { opacity: 1, y: 0, duration: 1.0, ease: 'power3.out' }, '-=0.6')
+        .to('#sidebar-content', { opacity: 1, y: 0, duration: 1.0, ease: 'power3.out' }, '-=0.8');
+
+      // ── Custom Cursor Support ─────────────────────────────
+      const cursor = document.getElementById('cursor');
+      const cursorRing = document.getElementById('cursor-ring');
+      
+      if (!matchMedia('(pointer: coarse)').matches) {
+        let cx = 0, cy = 0;
+        let rx = 0, ry = 0;
+
+        document.addEventListener('mousemove', (e) => {
+          cx = e.clientX; cy = e.clientY;
+          gsap.to(cursor, { x: cx, y: cy, duration: 0.05 });
+        });
+
+        const animRing = () => {
+          rx += (cx - rx) * 0.14;
+          ry += (cy - ry) * 0.14;
+          gsap.set(cursorRing, { x: rx, y: ry });
+          requestAnimationFrame(animRing);
+        };
+        animRing();
+
+        const hoverEls = document.querySelectorAll('a, button');
+        hoverEls.forEach(el => {
+          el.addEventListener('mouseenter', () => {
+            gsap.to(cursorRing, { width: 60, height: 60, borderColor: 'rgba(124,58,237,0.9)', duration: 0.3 });
+            gsap.to(cursor, { scale: 0.5, duration: 0.3 });
+          });
+          el.addEventListener('mouseleave', () => {
+            gsap.to(cursorRing, { width: 40, height: 40, borderColor: 'rgba(124,58,237,0.5)', duration: 0.3 });
+            gsap.to(cursor, { scale: 1, duration: 0.3 });
+          });
+        });
+      } else {
+        cursor.style.display = 'none';
+        cursorRing.style.display = 'none';
+        document.body.style.cursor = 'auto';
+      }
+
+      // Mobile nav toggle support
+      const toggle = document.querySelector('.nav-toggle');
+      const navLinks = document.querySelector('.nav-links');
+      const navCta = document.querySelector('.nav-cta');
+      if (toggle) {
+        toggle.addEventListener('click', () => {
+          const isOpen = toggle.classList.toggle('open');
+          toggle.setAttribute('aria-expanded', isOpen);
+          if (isOpen) {
+            gsap.set([navLinks, navCta], { display: 'flex', opacity: 0, y: -10 });
+            gsap.to([navLinks, navCta], { opacity: 1, y: 0, duration: 0.3 });
+          } else {
+            gsap.to([navLinks, navCta], {
+              opacity: 0, y: -10, duration: 0.2,
+              onComplete: () => gsap.set([navLinks, navCta], { display: 'none' })
+            });
+          }
+        });
+      }
+    });
+  </script>
+</body>
+</html>
