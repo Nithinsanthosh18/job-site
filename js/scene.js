@@ -25,59 +25,136 @@ export function initScene() {
   pointLight.position.set(0, 0, 3);
   scene.add(pointLight);
 
-  // ── Orbital Ring Group ────────────────────────────────────
+  // ── Lights ────────────────────────────────────────────────
+  const dirLight = new THREE.DirectionalLight(0xffffff, 2.5);
+  dirLight.position.set(5, 3, 5);
+  scene.add(dirLight);
+
+  // ── Orbital Ring Group (holds Earth and Satellites) ────────
   const orbGroup = new THREE.Group();
   scene.add(orbGroup);
 
-  // Main ring - multi-wrap (like the logo)
-  const ringMat = new THREE.MeshBasicMaterial({
-    color: 0xE8EAF0,
+  // ── Earth Globe Group ─────────────────────────────────────
+  const earthGroup = new THREE.Group();
+  orbGroup.add(earthGroup);
+
+  // Core solid sphere representing Earth
+  const earthGeo = new THREE.SphereGeometry(1.3, 32, 32);
+  const earthMat = new THREE.MeshPhongMaterial({
+    color: 0x110d29,
+    emissive: 0x070514,
     transparent: true,
-    opacity: 0.55,
+    opacity: 0.8,
+    shininess: 15,
   });
+  const earthMesh = new THREE.Mesh(earthGeo, earthMat);
+  earthGroup.add(earthMesh);
 
-  // Outer ring
-  const outerGeo = new THREE.TorusGeometry(1.8, 0.006, 8, 200);
-  const outerRing = new THREE.Mesh(outerGeo, ringMat.clone());
-  outerRing.material.opacity = 0.4;
-  orbGroup.add(outerRing);
+  // Grid wireframe overlay
+  const gridGeo = new THREE.SphereGeometry(1.31, 24, 24);
+  const gridMat = new THREE.MeshBasicMaterial({
+    color: 0x7C3AED,
+    wireframe: true,
+    transparent: true,
+    opacity: 0.25,
+  });
+  const earthGrid = new THREE.Mesh(gridGeo, gridMat);
+  earthGroup.add(earthGrid);
 
-  // Middle ring - slightly tilted
-  const middleGeo = new THREE.TorusGeometry(1.65, 0.008, 8, 200);
-  const middleRing = new THREE.Mesh(middleGeo, ringMat.clone());
-  middleRing.rotation.x = 0.15;
-  middleRing.rotation.y = -0.1;
-  orbGroup.add(middleRing);
+  // Holographic point-cloud continents
+  const globePointsCount = 800;
+  const globePositions = new Float32Array(globePointsCount * 3);
+  for (let i = 0; i < globePointsCount; i++) {
+    const u = Math.random();
+    const v = Math.random();
+    const theta = u * 2.0 * Math.PI;
+    const phi = Math.acos(2.0 * v - 1.0);
+    const r = 1.32;
 
-  // Inner ring
-  const innerGeo = new THREE.TorusGeometry(1.5, 0.006, 8, 200);
-  const innerRing = new THREE.Mesh(innerGeo, ringMat.clone());
-  innerRing.rotation.x = -0.1;
-  innerRing.rotation.z = 0.08;
-  orbGroup.add(innerRing);
+    globePositions[i * 3]     = r * Math.sin(phi) * Math.cos(theta);
+    globePositions[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
+    globePositions[i * 3 + 2] = r * Math.cos(phi);
+  }
+  const globePointsGeo = new THREE.BufferGeometry();
+  globePointsGeo.setAttribute('position', new THREE.BufferAttribute(globePositions, 3));
+  const globePointsMat = new THREE.PointsMaterial({
+    color: 0xA78BFA,
+    size: 0.035,
+    transparent: true,
+    opacity: 0.75,
+  });
+  const globePoints = new THREE.Points(globePointsGeo, globePointsMat);
+  earthGroup.add(globePoints);
 
-  // Violet glow ring
-  const glowGeo = new THREE.TorusGeometry(1.6, 0.014, 8, 200);
-  const glowMat = new THREE.MeshBasicMaterial({ color: 0x7C3AED, transparent: true, opacity: 0.3 });
-  const glowRing = new THREE.Mesh(glowGeo, glowMat);
-  glowRing.rotation.x = 0.05;
-  orbGroup.add(glowRing);
+  // ── 4 Satellites & Orbit Paths ────────────────────────────
+  function createSatelliteMesh() {
+    const satGroup = new THREE.Group();
+    
+    // Body (violet glow box)
+    const bodyGeo = new THREE.BoxGeometry(0.12, 0.08, 0.08);
+    const bodyMat = new THREE.MeshPhongMaterial({ color: 0xA78BFA, emissive: 0x5b21b6 });
+    const body = new THREE.Mesh(bodyGeo, bodyMat);
+    satGroup.add(body);
 
-  // Orbital dot (the black dot on the logo)
-  const dotGeo = new THREE.SphereGeometry(0.08, 16, 16);
-  const dotMat = new THREE.MeshBasicMaterial({ color: 0x7C3AED });
-  const orbDot = new THREE.Mesh(dotGeo, dotMat);
-  const dotPivot = new THREE.Object3D();
-  dotPivot.add(orbDot);
-  orbDot.position.set(1.72, 0, 0);
-  scene.add(dotPivot);
+    // Solar panels
+    const panelGeo = new THREE.BoxGeometry(0.015, 0.04, 0.2);
+    const panelMat = new THREE.MeshBasicMaterial({ color: 0xE8EAF0, transparent: true, opacity: 0.7 });
+    
+    const panelL = new THREE.Mesh(panelGeo, panelMat);
+    panelL.position.set(0.07, 0, 0);
+    satGroup.add(panelL);
 
-  // Dot glow
-  const dotGlowGeo = new THREE.SphereGeometry(0.14, 16, 16);
-  const dotGlowMat = new THREE.MeshBasicMaterial({ color: 0x7C3AED, transparent: true, opacity: 0.25 });
-  const dotGlow = new THREE.Mesh(dotGlowGeo, dotGlowMat);
-  dotGlow.position.copy(orbDot.position);
-  dotPivot.add(dotGlow);
+    const panelR = panelL.clone();
+    panelR.position.set(-0.07, 0, 0);
+    satGroup.add(panelR);
+
+    return satGroup;
+  }
+
+  function createOrbitPathMesh(radius, tiltX, tiltZ) {
+    const orbitGeo = new THREE.TorusGeometry(radius, 0.003, 8, 120);
+    const orbitMat = new THREE.MeshBasicMaterial({
+      color: 0x7C3AED,
+      transparent: true,
+      opacity: 0.12,
+    });
+    const orbitMesh = new THREE.Mesh(orbitGeo, orbitMat);
+    orbitMesh.rotation.x = tiltX;
+    orbitMesh.rotation.z = tiltZ;
+    return orbitMesh;
+  }
+
+  const satellites = [];
+  const satData = [
+    { radius: 1.8, tiltX: 0.5, tiltZ: 0.3, speed: 0.7 },
+    { radius: 2.1, tiltX: -0.4, tiltZ: 0.6, speed: -0.5 },
+    { radius: 2.4, tiltX: 1.1, tiltZ: -0.5, speed: 0.4 },
+    { radius: 2.7, tiltX: -0.8, tiltZ: -0.9, speed: -0.3 }
+  ];
+
+  satData.forEach((data) => {
+    // Torus orbit path
+    const orbitPath = createOrbitPathMesh(data.radius, data.tiltX, data.tiltZ);
+    orbGroup.add(orbitPath);
+
+    // Tilt container for rotator
+    const tiltGroup = new THREE.Group();
+    tiltGroup.rotation.x = data.tiltX;
+    tiltGroup.rotation.z = data.tiltZ;
+    orbGroup.add(tiltGroup);
+
+    // Rotator group (rotates around Y)
+    const rotator = new THREE.Group();
+    tiltGroup.add(rotator);
+
+    // Satellite mesh
+    const satMesh = createSatelliteMesh();
+    satMesh.position.x = data.radius;
+    satMesh.rotation.y = Math.PI / 2; // Face direction of motion
+    rotator.add(satMesh);
+
+    satellites.push({ rotator, speed: data.speed });
+  });
 
   // ── Particle Field ────────────────────────────────────────
   const particleCount = 1800;
@@ -179,12 +256,13 @@ export function initScene() {
     camera.position.z = 5 + scrollProgress * 4;
     camera.lookAt(0, scrollProgress * 1.2, 0);
 
-    // ── Dot pivot rotates with time ──────────────────────────
-    dotPivot.rotation.y = t * 0.5 + scrollProgress * Math.PI * 3;
-    dotPivot.rotation.x = t * 0.12;
+    // ── Rotate Earth slowly ──────────────────────────────────
+    earthGroup.rotation.y = t * 0.15;
 
-    // ── Glow ring pulse ──────────────────────────────────────
-    glowRing.material.opacity = 0.15 + Math.sin(t * 1.2) * 0.1;
+    // ── Rotate Satellites in their orbits ────────────────────
+    satellites.forEach((sat) => {
+      sat.rotator.rotation.y = t * sat.speed;
+    });
 
     // ── Particles drift ──────────────────────────────────────
     particles.rotation.y = t * 0.012 + mouseX * 0.08;
