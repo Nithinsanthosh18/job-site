@@ -33,79 +33,140 @@ export function initScene() {
   // ── Orbital Ring Group (holds Earth and Satellites) ────────
   const orbGroup = new THREE.Group();
   scene.add(orbGroup);
+  // ── Procedural Earth Texture ─────────────────────────────
+  const canvas = document.createElement('canvas');
+  canvas.width = 1024;
+  canvas.height = 512;
+  const ctx = canvas.getContext('2d');
+
+  // Fill ocean background
+  ctx.fillStyle = '#060814';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // Paint land masses procedurally
+  const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const data = imgData.data;
+
+  for (let y = 0; y < canvas.height; y++) {
+    for (let x = 0; x < canvas.width; x++) {
+      // Spherical projection coordinates to avoid stretching
+      const theta = (x / canvas.width) * 2.0 * Math.PI;
+      const phi = (y / canvas.height) * Math.PI;
+      
+      const nx = Math.sin(phi) * Math.cos(theta);
+      const ny = Math.sin(phi) * Math.sin(theta);
+      const nz = Math.cos(phi);
+
+      // Wave-sum noise to generate continent maps
+      let val = 0;
+      val += Math.sin(nx * 2.2) * Math.cos(ny * 2.2) * Math.sin(nz * 2.2) * 0.5;
+      val += Math.sin(nx * 4.3 + 1.0) * Math.sin(ny * 4.1) * Math.cos(nz * 4.5) * 0.25;
+      val += Math.cos(nx * 8.7) * Math.cos(ny * 8.1 - 2.0) * Math.sin(nz * 8.3) * 0.12;
+      val += Math.sin(nx * 16.4) * Math.cos(nz * 16.1) * 0.06;
+      const h = (val + 1) / 2;
+
+      const idx = (y * canvas.width + x) * 4;
+      if (h > 0.47) {
+        // Land: glowing neon violet
+        data[idx]     = 110 + Math.floor(h * 30);
+        data[idx + 1] = 60 + Math.floor(h * 30);
+        data[idx + 2] = 230 + Math.floor(h * 25);
+      } else if (h > 0.45) {
+        // Shorelines: vibrant violet highlight
+        data[idx]     = 167;
+        data[idx + 1] = 139;
+        data[idx + 2] = 250;
+      } else {
+        // Ocean: dark blue-black with subtle lat/long grid lines
+        if (x % 64 === 0 || y % 64 === 0) {
+          data[idx]     = 24;
+          data[idx + 1] = 16;
+          data[idx + 2] = 65;
+        } else {
+          data[idx]     = 6;
+          data[idx + 1] = 8;
+          data[idx + 2] = 20;
+        }
+      }
+    }
+  }
+  ctx.putImageData(imgData, 0, 0);
+  const earthTexture = new THREE.CanvasTexture(canvas);
 
   // ── Earth Globe Group ─────────────────────────────────────
   const earthGroup = new THREE.Group();
   orbGroup.add(earthGroup);
 
-  // Core solid sphere representing Earth
+  // Core Earth Sphere (textured)
   const earthGeo = new THREE.SphereGeometry(1.3, 32, 32);
   const earthMat = new THREE.MeshPhongMaterial({
-    color: 0x110d29,
-    emissive: 0x070514,
-    transparent: true,
-    opacity: 0.8,
-    shininess: 15,
+    map: earthTexture,
+    emissive: 0x7c3aed,
+    emissiveMap: earthTexture,
+    emissiveIntensity: 0.75,
+    shininess: 25,
   });
   const earthMesh = new THREE.Mesh(earthGeo, earthMat);
   earthGroup.add(earthMesh);
 
-  // Grid wireframe overlay
-  const gridGeo = new THREE.SphereGeometry(1.31, 24, 24);
-  const gridMat = new THREE.MeshBasicMaterial({
+  // Soft atmospheric outer glow shell
+  const atmosGeo = new THREE.SphereGeometry(1.36, 32, 32);
+  const atmosMat = new THREE.MeshBasicMaterial({
     color: 0x7C3AED,
-    wireframe: true,
     transparent: true,
-    opacity: 0.25,
+    opacity: 0.14,
+    side: THREE.BackSide,
   });
-  const earthGrid = new THREE.Mesh(gridGeo, gridMat);
-  earthGroup.add(earthGrid);
-
-  // Holographic point-cloud continents
-  const globePointsCount = 800;
-  const globePositions = new Float32Array(globePointsCount * 3);
-  for (let i = 0; i < globePointsCount; i++) {
-    const u = Math.random();
-    const v = Math.random();
-    const theta = u * 2.0 * Math.PI;
-    const phi = Math.acos(2.0 * v - 1.0);
-    const r = 1.32;
-
-    globePositions[i * 3]     = r * Math.sin(phi) * Math.cos(theta);
-    globePositions[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
-    globePositions[i * 3 + 2] = r * Math.cos(phi);
-  }
-  const globePointsGeo = new THREE.BufferGeometry();
-  globePointsGeo.setAttribute('position', new THREE.BufferAttribute(globePositions, 3));
-  const globePointsMat = new THREE.PointsMaterial({
-    color: 0xA78BFA,
-    size: 0.035,
-    transparent: true,
-    opacity: 0.75,
-  });
-  const globePoints = new THREE.Points(globePointsGeo, globePointsMat);
-  earthGroup.add(globePoints);
+  const atmosMesh = new THREE.Mesh(atmosGeo, atmosMat);
+  earthGroup.add(atmosMesh);
 
   // ── 4 Satellites & Orbit Paths ────────────────────────────
   function createSatelliteMesh() {
     const satGroup = new THREE.Group();
     
-    // Body (violet glow box)
-    const bodyGeo = new THREE.BoxGeometry(0.12, 0.08, 0.08);
-    const bodyMat = new THREE.MeshPhongMaterial({ color: 0xA78BFA, emissive: 0x5b21b6 });
+    // Main cylindrical body (metallic silver)
+    const bodyGeo = new THREE.CylinderGeometry(0.045, 0.045, 0.16, 8);
+    const bodyMat = new THREE.MeshPhongMaterial({
+      color: 0xcccccc,
+      shininess: 100,
+      specular: 0xffffff,
+    });
     const body = new THREE.Mesh(bodyGeo, bodyMat);
+    body.rotation.x = Math.PI / 2; // Lie flat along movement
     satGroup.add(body);
 
-    // Solar panels
-    const panelGeo = new THREE.BoxGeometry(0.015, 0.04, 0.2);
-    const panelMat = new THREE.MeshBasicMaterial({ color: 0xE8EAF0, transparent: true, opacity: 0.7 });
+    // Instrument box (gold foil)
+    const goldGeo = new THREE.BoxGeometry(0.065, 0.065, 0.065);
+    const goldMat = new THREE.MeshPhongMaterial({
+      color: 0xd4af37, // gold
+      shininess: 80,
+    });
+    const goldBox = new THREE.Mesh(goldGeo, goldMat);
+    goldBox.position.set(0, 0, 0.06);
+    satGroup.add(goldBox);
+
+    // Parabolic dish antenna pointing towards Earth (downward/inward)
+    const dishGeo = new THREE.SphereGeometry(0.04, 12, 12, 0, Math.PI * 2, 0, Math.PI / 2);
+    const dishMat = new THREE.MeshPhongMaterial({ color: 0xdddddd, side: THREE.DoubleSide });
+    const dish = new THREE.Mesh(dishGeo, dishMat);
+    dish.position.set(0, -0.07, 0); // pointing inward
+    dish.rotation.x = Math.PI / 2;
+    satGroup.add(dish);
+
+    // Solar panels (dark blue cell arrays)
+    const panelGeo = new THREE.BoxGeometry(0.24, 0.005, 0.08);
+    const panelMat = new THREE.MeshPhongMaterial({
+      color: 0x1d4ed8, // dark blue
+      shininess: 90,
+      emissive: 0x0f172a,
+    });
     
     const panelL = new THREE.Mesh(panelGeo, panelMat);
-    panelL.position.set(0.07, 0, 0);
+    panelL.position.set(0.15, 0, 0);
     satGroup.add(panelL);
 
     const panelR = panelL.clone();
-    panelR.position.set(-0.07, 0, 0);
+    panelR.position.set(-0.15, 0, 0);
     satGroup.add(panelR);
 
     return satGroup;
