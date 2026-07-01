@@ -305,11 +305,68 @@ export function initScene() {
     orbGroup.position.z = -scrollProgress * 3;
     orbGroup.position.y = scrollProgress * 1.5;
 
-    // ── Camera: parallax + pull back on scroll ───────────────
-    camera.position.x = mouseX * 0.4;
-    camera.position.y = -mouseY * 0.25 + scrollProgress * 1.5;
-    camera.position.z = 5 + scrollProgress * 4;
-    camera.lookAt(0, scrollProgress * 1.2, 0);
+    // ── Camera: scroll-driven focus transition (Earth -> Moon -> Moon zoom -> Earth) ──
+    // Calculate world positions of Earth and Moon
+    const earthWorldPos = new THREE.Vector3();
+    earthMesh.getWorldPosition(earthWorldPos);
+    
+    const moonWorldPos = new THREE.Vector3();
+    moonMesh.getWorldPosition(moonWorldPos);
+
+    // Calculate transition factors based on scrollProgress
+    let focusOnMoon = 0;
+    let moonZoomFactor = 0; // 0 = closest, 1 = zoomed out
+    
+    if (scrollProgress < 0.22) {
+      focusOnMoon = 0;
+    } else if (scrollProgress >= 0.22 && scrollProgress < 0.42) {
+      // Transition from Earth focus to Moon focus
+      const tProgress = (scrollProgress - 0.22) / 0.20;
+      focusOnMoon = THREE.MathUtils.smoothstep(tProgress, 0, 1);
+    } else if (scrollProgress >= 0.42 && scrollProgress < 0.58) {
+      // Locked close-up focus on the Moon
+      focusOnMoon = 1.0;
+      moonZoomFactor = 0.0;
+    } else if (scrollProgress >= 0.58 && scrollProgress < 0.76) {
+      // Moon zooms out (camera pulls back) while keeping focus
+      focusOnMoon = 1.0;
+      const tProgress = (scrollProgress - 0.58) / 0.18;
+      moonZoomFactor = THREE.MathUtils.smoothstep(tProgress, 0, 1);
+    } else if (scrollProgress >= 0.76 && scrollProgress < 0.92) {
+      // Transition back from Moon focus to Earth/center focus
+      const tProgress = (scrollProgress - 0.76) / 0.16;
+      focusOnMoon = THREE.MathUtils.smoothstep(1.0 - tProgress, 0, 1);
+      moonZoomFactor = 1.0;
+    } else {
+      focusOnMoon = 0;
+      moonZoomFactor = 1.0;
+    }
+
+    // Camera position when focusing on Earth (base camera path)
+    const baseCamPos = new THREE.Vector3(
+      mouseX * 0.4,
+      -mouseY * 0.25 + scrollProgress * 1.5,
+      5 + scrollProgress * 4
+    );
+
+    // Camera position when focusing on Moon (close-up path with zoom-out)
+    const moonOffsetDistance = 1.1 + moonZoomFactor * 2.8; // Zooms out from 1.1 to 3.9 units
+    const moonCamPos = moonWorldPos.clone().add(new THREE.Vector3(
+      0.4 + mouseX * 0.3,
+      0.2 - mouseY * 0.2,
+      moonOffsetDistance
+    ));
+
+    // Interpolate camera position and target
+    const finalCamPos = new THREE.Vector3().lerpVectors(baseCamPos, moonCamPos, focusOnMoon);
+    camera.position.copy(finalCamPos);
+
+    const targetLookAt = new THREE.Vector3().lerpVectors(
+      new THREE.Vector3(0, scrollProgress * 1.2, 0),
+      moonWorldPos,
+      focusOnMoon
+    );
+    camera.lookAt(targetLookAt);
 
     // ── Dot pivot rotates on the ring's plane ────────────────
     dotPivot.rotation.z = t * 0.5 + scrollProgress * Math.PI * 3;
