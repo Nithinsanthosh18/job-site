@@ -40,18 +40,7 @@ export function initScene() {
   const orbGroup = new THREE.Group();
   scene.add(orbGroup);
 
-  // Single Orbit Ring (Tilted and prominent, opacity set to 0.0 to hide it)
-  const ringMat = new THREE.MeshBasicMaterial({
-    color: 0xE8EAF0,
-    transparent: true,
-    opacity: 0.0,
-    side: THREE.DoubleSide
-  });
-  const ringGeo = new THREE.TorusGeometry(3.5, 0.018, 8, 200); 
-  const orbitRing = new THREE.Mesh(ringGeo, ringMat);
-  orbitRing.rotation.x = 1.2;
-  orbitRing.rotation.y = 0.15;
-  orbGroup.add(orbitRing);
+
 
   // Orbit path dummy (represents the Moon's position on the orbit)
   const moonDummy = new THREE.Object3D();
