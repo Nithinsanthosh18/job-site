@@ -53,7 +53,17 @@ export function initScene() {
   orbitRing.rotation.y = 0.15;
   orbGroup.add(orbitRing);
 
-  // 3D Moon Globe Mesh (Replaces the basic orbDot)
+  // Orbit path dummy (represents the Moon's position on the orbit)
+  const moonDummy = new THREE.Object3D();
+  moonDummy.position.set(3.5, 0, 0);
+  
+  const dotPivot = new THREE.Object3D();
+  dotPivot.rotation.x = 1.2; // Match the orbit ring tilt
+  dotPivot.rotation.y = 0.15;
+  dotPivot.add(moonDummy);
+  orbGroup.add(dotPivot);
+
+  // 3D Moon Globe Mesh
   const moonTex = new THREE.TextureLoader().load('assets/moon_texture.jpg');
   moonTex.colorSpace = THREE.SRGBColorSpace;
   const moonGeo = new THREE.SphereGeometry(0.42, 32, 32); 
@@ -62,14 +72,13 @@ export function initScene() {
     roughness: 0.95,
     metalness: 0.05,
   });
-  const moonMesh = new THREE.Mesh(moonGeo, moonMat);
   
-  const dotPivot = new THREE.Object3D();
-  dotPivot.rotation.x = 1.2; // Match the orbit ring tilt
-  dotPivot.rotation.y = 0.15;
-  dotPivot.add(moonMesh);
-  moonMesh.position.set(3.5, 0, 0); // Position directly on the orbit radius
-  orbGroup.add(dotPivot); // Nested inside orbGroup so it zooms and scales on scroll
+  const moonGroup = new THREE.Group();
+  moonGroup.rotation.z = 0.15; // Moon axial tilt
+  orbGroup.add(moonGroup);
+
+  const moonMesh = new THREE.Mesh(moonGeo, moonMat);
+  moonGroup.add(moonMesh);
 
   // ── 3D Earth Globe System ──────────────────────────────────
   const textureLoader = new THREE.TextureLoader();
@@ -281,10 +290,16 @@ export function initScene() {
     mouseX += (targetMouseX - mouseX) * 0.04;
     mouseY += (targetMouseY - mouseY) * 0.04;
 
+    // ── Update Moon position relative to the orbit path ──────
+    const tempMoonPos = new THREE.Vector3();
+    moonDummy.getWorldPosition(tempMoonPos);
+    orbGroup.worldToLocal(tempMoonPos);
+    moonGroup.position.copy(tempMoonPos);
+
     // ── Earth & Moon Globe rotation (independent and infinite) ──────
     earthMesh.rotation.y = t * 0.12;
     cloudMesh.rotation.y = t * 0.15; // Clouds rotate slightly faster for dynamic effect
-    moonMesh.rotation.y = t * 0.25;  // Moon rotates on its own axis
+    moonMesh.rotation.y = t * 0.45;  // Spin Moon mesh on its own Y-axis
 
 
     // ── Update light directions in view space for shader ─────
