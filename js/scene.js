@@ -40,37 +40,36 @@ export function initScene() {
   const orbGroup = new THREE.Group();
   scene.add(orbGroup);
 
-  // Single Orbit Ring (Tilted and prominent)
+  // Single Orbit Ring (Tilted and prominent, opacity set to 0.0 to hide it)
   const ringMat = new THREE.MeshBasicMaterial({
     color: 0xE8EAF0,
     transparent: true,
-    opacity: 0.45,
+    opacity: 0.0,
     side: THREE.DoubleSide
   });
-  const ringGeo = new THREE.TorusGeometry(3.5, 0.018, 8, 200); // Widened and thickened for larger Earth
+  const ringGeo = new THREE.TorusGeometry(3.5, 0.018, 8, 200); 
   const orbitRing = new THREE.Mesh(ringGeo, ringMat);
   orbitRing.rotation.x = 1.2;
   orbitRing.rotation.y = 0.15;
   orbGroup.add(orbitRing);
 
-  // Orbital dot (Satellite orbiting on the ring plane)
-  const dotGeo = new THREE.SphereGeometry(0.08, 16, 16);
-  const dotMat = new THREE.MeshBasicMaterial({ color: 0x7C3AED });
-  const orbDot = new THREE.Mesh(dotGeo, dotMat);
+  // 3D Moon Globe Mesh (Replaces the basic orbDot)
+  const moonTex = new THREE.TextureLoader().load('assets/moon_texture.jpg');
+  moonTex.colorSpace = THREE.SRGBColorSpace;
+  const moonGeo = new THREE.SphereGeometry(0.42, 32, 32); 
+  const moonMat = new THREE.MeshStandardMaterial({
+    map: moonTex,
+    roughness: 0.95,
+    metalness: 0.05,
+  });
+  const moonMesh = new THREE.Mesh(moonGeo, moonMat);
   
   const dotPivot = new THREE.Object3D();
   dotPivot.rotation.x = 1.2; // Match the orbit ring tilt
   dotPivot.rotation.y = 0.15;
-  dotPivot.add(orbDot);
-  orbDot.position.set(3.5, 0, 0); // Position directly on the ring radius (3.5)
+  dotPivot.add(moonMesh);
+  moonMesh.position.set(3.5, 0, 0); // Position directly on the orbit radius
   orbGroup.add(dotPivot); // Nested inside orbGroup so it zooms and scales on scroll
-
-  // Dot glow
-  const dotGlowGeo = new THREE.SphereGeometry(0.14, 16, 16);
-  const dotGlowMat = new THREE.MeshBasicMaterial({ color: 0x7C3AED, transparent: true, opacity: 0.25 });
-  const dotGlow = new THREE.Mesh(dotGlowGeo, dotGlowMat);
-  dotGlow.position.copy(orbDot.position);
-  dotPivot.add(dotGlow);
 
   // ── 3D Earth Globe System ──────────────────────────────────
   const textureLoader = new THREE.TextureLoader();
@@ -315,8 +314,7 @@ export function initScene() {
     // ── Dot pivot rotates on the ring's plane ────────────────
     dotPivot.rotation.z = t * 0.5 + scrollProgress * Math.PI * 3;
 
-    // ── Orbit ring opacity pulse ─────────────────────────────
-    orbitRing.material.opacity = 0.35 + Math.sin(t * 1.2) * 0.1;
+    // (Orbit ring opacity remains 0.0 as requested)
 
     // ── Particles drift ──────────────────────────────────────
     particles.rotation.y = t * 0.012 + mouseX * 0.08;
