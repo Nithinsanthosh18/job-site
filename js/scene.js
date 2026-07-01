@@ -63,14 +63,57 @@ export function initScene() {
   dotPivot.add(moonDummy);
   orbGroup.add(dotPivot);
 
-  // 3D Moon Globe Mesh
+  // 3D Moon Globe Mesh (Custom shader for ultra-smooth terminator day/night transition)
   const moonTex = new THREE.TextureLoader().load('assets/moon_texture.jpg');
   moonTex.colorSpace = THREE.SRGBColorSpace;
   const moonGeo = new THREE.SphereGeometry(0.42, 32, 32); 
-  const moonMat = new THREE.MeshStandardMaterial({
-    map: moonTex,
-    roughness: 0.95,
-    metalness: 0.05,
+  const moonMat = new THREE.ShaderMaterial({
+    uniforms: {
+      moonTexture: { value: moonTex },
+      sunDirection: { value: new THREE.Vector3(5, 3, 5).normalize() },
+      fillDirection: { value: new THREE.Vector3(-5, -2, -5).normalize() },
+      ambientColor: { value: new THREE.Color(0x7C3AED) },
+      ambientIntensity: { value: 0.12 }
+    },
+    vertexShader: `
+      varying vec2 vUv;
+      varying vec3 vNormal;
+      void main() {
+        vUv = uv;
+        vNormal = normalize(normalMatrix * normal);
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }
+    `,
+    fragmentShader: `
+      uniform sampler2D moonTexture;
+      uniform vec3 sunDirection;
+      uniform vec3 fillDirection;
+      uniform vec3 ambientColor;
+      uniform float ambientIntensity;
+      
+      varying vec2 vUv;
+      varying vec3 vNormal;
+      
+      void main() {
+        vec3 normal = normalize(vNormal);
+        float dotNL = dot(normal, sunDirection);
+        float dotFill = dot(normal, fillDirection);
+        
+        // Very wide smoothstep transition range (-0.5 to 0.5) for a super smooth terminator line
+        float dayFactor = smoothstep(-0.5, 0.5, dotNL);
+        
+        vec4 texColor = texture2D(moonTexture, vUv);
+        
+        float mainLight = max(dotNL, 0.0) * 1.25;
+        float fillLightVal = max(dotFill, 0.0) * 0.4;
+        
+        vec4 dayColor = texColor * (mainLight + fillLightVal + 0.05);
+        vec4 nightColor = texColor * 0.03; // faint shadow details
+        vec4 fillCol = vec4(ambientColor, 1.0) * ambientIntensity * (1.0 - dayFactor);
+        
+        gl_FragColor = mix(nightColor, dayColor, dayFactor) + fillCol;
+      }
+    `
   });
   
   const moonGroup = new THREE.Group();
@@ -299,17 +342,19 @@ export function initScene() {
     // ── Earth & Moon Globe rotation (independent and infinite) ──────
     earthMesh.rotation.y = t * 0.12;
     cloudMesh.rotation.y = t * 0.15; // Clouds rotate slightly faster for dynamic effect
-    moonMesh.rotation.y = t * 0.45;  // Spin Moon mesh on its own Y-axis
+    moonMesh.rotation.y = t * 0.90;  // Spin Moon mesh on its own Y-axis (significantly faster than Earth)
 
 
     // ── Update light directions in view space for shader ─────
     const worldSunPos = new THREE.Vector3(5, 3, 5);
     const viewSunDir = worldSunPos.clone().applyMatrix4(camera.matrixWorldInverse).normalize();
     earthMat.uniforms.sunDirection.value.copy(viewSunDir);
+    moonMat.uniforms.sunDirection.value.copy(viewSunDir);
 
     const worldFillPos = new THREE.Vector3(-5, -2, -5);
     const viewFillDir = worldFillPos.clone().applyMatrix4(camera.matrixWorldInverse).normalize();
     earthMat.uniforms.fillDirection.value.copy(viewFillDir);
+    moonMat.uniforms.fillDirection.value.copy(viewFillDir);
 
     // ── Orb group: scroll drives rotation + Z movement ──────
     orbGroup.rotation.y = t * 0.08 + scrollProgress * Math.PI * 2.5;
