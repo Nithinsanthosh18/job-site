@@ -345,13 +345,23 @@ export function initScene() {
     moonMesh.rotation.y = t * 0.90;  // Spin Moon mesh on its own Y-axis (significantly faster than Earth)
 
 
-    // ── Update light directions in view space for shader ─────
-    const worldSunPos = new THREE.Vector3(5, 3, 5);
+    // ── Rotate the Sun and Fill light positions dynamically ──
+    const lightAngle = t * 0.25; // Revolve speed matching the Moon's orbit aesthetics
+    const worldSunPos = new THREE.Vector3(
+      6.0 * Math.cos(lightAngle),
+      3.5,
+      6.0 * Math.sin(lightAngle)
+    );
+    sunLight.position.copy(worldSunPos);
+
+    const worldFillPos = worldSunPos.clone().multiplyScalar(-1.0);
+    fillLight.position.copy(worldFillPos);
+
+    // Update shaders with view-space directions
     const viewSunDir = worldSunPos.clone().applyMatrix4(camera.matrixWorldInverse).normalize();
     earthMat.uniforms.sunDirection.value.copy(viewSunDir);
     moonMat.uniforms.sunDirection.value.copy(viewSunDir);
 
-    const worldFillPos = new THREE.Vector3(-5, -2, -5);
     const viewFillDir = worldFillPos.clone().applyMatrix4(camera.matrixWorldInverse).normalize();
     earthMat.uniforms.fillDirection.value.copy(viewFillDir);
     moonMat.uniforms.fillDirection.value.copy(viewFillDir);
