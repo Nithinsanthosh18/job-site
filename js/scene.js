@@ -76,12 +76,11 @@ export function initScene() {
       ambientIntensity: { value: 0.12 }
     },
     vertexShader: `
-      varying vec2 vProjUv;
+      varying vec2 vUv;
       varying vec3 vNormal;
       void main() {
+        vUv = uv;
         vNormal = normalize(normalMatrix * normal);
-        // Project texture on both front and back hemispheres symmetrically (avoids black back side)
-        vProjUv = normal.xy * 0.5 + vec2(0.5);
         gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
       }
     `,
@@ -92,7 +91,7 @@ export function initScene() {
       uniform vec3 ambientColor;
       uniform float ambientIntensity;
       
-      varying vec2 vProjUv;
+      varying vec2 vUv;
       varying vec3 vNormal;
       
       void main() {
@@ -103,8 +102,8 @@ export function initScene() {
         // Very wide smoothstep transition range (-0.5 to 0.5) for a super smooth terminator line
         float dayFactor = smoothstep(-0.5, 0.5, dotNL);
         
-        // Read the projected Moon texture
-        vec4 texColor = texture2D(moonTexture, vProjUv);
+        // Read the Moon texture using standard UV coordinates
+        vec4 texColor = texture2D(moonTexture, vUv);
         
         float mainLight = max(dotNL, 0.0) * 1.25;
         float fillLightVal = max(dotFill, 0.0) * 0.4;
