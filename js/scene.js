@@ -1,6 +1,6 @@
 /**
  * ORBIS — Three.js WebGL Scene
- * Scroll-driven orbital ring with particle field
+ * Scroll-driven orbital ring with 3D Earth and particle field
  */
 
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
@@ -19,8 +19,14 @@ export function initScene() {
   // ── Fog ──────────────────────────────────────────────────
   scene.fog = new THREE.FogExp2(0x080A0F, 0.04);
 
-  // ── Ambient light ─────────────────────────────────────────
-  scene.add(new THREE.AmbientLight(0x7C3AED, 0.3));
+  // ── Lighting ──────────────────────────────────────────────
+  // Sun directional light (illuminates the day side)
+  const sunLight = new THREE.DirectionalLight(0xffffff, 2.5);
+  sunLight.position.set(5, 3, 5);
+  scene.add(sunLight);
+
+  // Violet ambient and point fill lights (illuminates the shadow/night side with a sci-fi tint)
+  scene.add(new THREE.AmbientLight(0x7C3AED, 0.25));
   const pointLight = new THREE.PointLight(0x7C3AED, 2, 20);
   pointLight.position.set(0, 0, 3);
   scene.add(pointLight);
@@ -78,6 +84,129 @@ export function initScene() {
   const dotGlow = new THREE.Mesh(dotGlowGeo, dotGlowMat);
   dotGlow.position.copy(orbDot.position);
   dotPivot.add(dotGlow);
+
+  // ── 3D Earth Globe System ──────────────────────────────────
+  const textureLoader = new THREE.TextureLoader();
+  const dayTex = textureLoader.load('assets/earth_day.jpg');
+  const nightTex = textureLoader.load('assets/earth_night.jpg');
+  const cloudsTex = textureLoader.load('assets/earth_clouds.png');
+
+  // Colorspace configuration for Three.js v0.160+
+  dayTex.colorSpace = THREE.SRGBColorSpace;
+  nightTex.colorSpace = THREE.SRGBColorSpace;
+
+  // Custom Shader Material for Day/Night blending + Ocean Specular reflections
+  const earthMat = new THREE.ShaderMaterial({
+    uniforms: {
+      dayTexture: { value: dayTex },
+      nightTexture: { value: nightTex },
+      sunDirection: { value: new THREE.Vector3(5, 3, 5).normalize() },
+      ambientColor: { value: new THREE.Color(0x7C3AED) },
+      ambientIntensity: { value: 0.15 }
+    },
+    vertexShader: `
+      varying vec2 vUv;
+      varying vec3 vNormal;
+      varying vec3 vViewPosition;
+      void main() {
+        vUv = uv;
+        vNormal = normalize(normalMatrix * normal);
+        vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+        vViewPosition = -mvPosition.xyz;
+        gl_Position = projectionMatrix * mvPosition;
+      }
+    `,
+    fragmentShader: `
+      uniform sampler2D dayTexture;
+      uniform sampler2D nightTexture;
+      uniform vec3 sunDirection;
+      uniform vec3 ambientColor;
+      uniform float ambientIntensity;
+      
+      varying vec2 vUv;
+      varying vec3 vNormal;
+      varying vec3 vViewPosition;
+      
+      void main() {
+        vec3 normal = normalize(vNormal);
+        vec3 viewDir = normalize(vViewPosition);
+        
+        // Lighting angle relative to the Sun
+        float dotNL = dot(normal, sunDirection);
+        
+        // Day/night blending factor
+        float dayFactor = smoothstep(-0.15, 0.15, dotNL);
+        
+        vec4 dayColor = texture2D(dayTexture, vUv);
+        vec4 nightColor = texture2D(nightTexture, vUv);
+        
+        // Specular highlight on oceans
+        vec3 halfVector = normalize(sunDirection + viewDir);
+        float spec = pow(max(dot(normal, halfVector), 0.0), 32.0);
+        
+        // Simple specular mask (oceans are blue, continents are not)
+        float specularMask = smoothstep(0.1, 0.5, dayColor.b - dayColor.r);
+        vec4 specColor = vec4(1.0, 1.0, 1.0, 1.0) * spec * specularMask * 0.45;
+        
+        // Day final color (lighting + specular)
+        float diffuseLight = max(dotNL, 0.0);
+        vec4 dayFinal = (dayColor * (diffuseLight * 1.0 + 0.05)) + specColor;
+        
+        // Night final color (city lights boost)
+        vec4 nightFinal = nightColor * 2.0;
+        
+        // Subtle violet ambient fill in shadows
+        vec4 fillCol = vec4(ambientColor, 1.0) * ambientIntensity * (1.0 - dayFactor);
+        
+        gl_FragColor = mix(nightFinal, dayFinal, dayFactor) + fillCol;
+      }
+    `
+  });
+
+  const earthGroup = new THREE.Group();
+  earthGroup.rotation.z = 0.41; // Tilt Earth's axis by 23.5 degrees
+  orbGroup.add(earthGroup);
+
+  // Earth Globe Mesh
+  const earthGeo = new THREE.SphereGeometry(1.0, 64, 64);
+  const earthMesh = new THREE.Mesh(earthGeo, earthMat);
+  earthGroup.add(earthMesh);
+
+  // Cloud Layer (slightly larger, transparent)
+  const cloudGeo = new THREE.SphereGeometry(1.015, 64, 64);
+  const cloudMat = new THREE.MeshPhongMaterial({
+    map: cloudsTex,
+    transparent: true,
+    opacity: 0.4,
+    depthWrite: false
+  });
+  const cloudMesh = new THREE.Mesh(cloudGeo, cloudMat);
+  earthGroup.add(cloudMesh);
+
+  // Atmosphere Glow Layer (using Fresnel Shader)
+  const atmosphereGeo = new THREE.SphereGeometry(1.04, 64, 64);
+  const atmosphereMat = new THREE.ShaderMaterial({
+    vertexShader: `
+      varying vec3 vNormal;
+      void main() {
+        vNormal = normalize(normalMatrix * normal);
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }
+    `,
+    fragmentShader: `
+      varying vec3 vNormal;
+      void main() {
+        float intensity = pow(max(0.7 - vNormal.z, 0.0), 2.5);
+        gl_FragColor = vec4(0.6, 0.4, 1.0, 1.0) * intensity;
+      }
+    `,
+    blending: THREE.AdditiveBlending,
+    side: THREE.FrontSide,
+    transparent: true,
+    depthWrite: false
+  });
+  const atmosphereMesh = new THREE.Mesh(atmosphereGeo, atmosphereMat);
+  orbGroup.add(atmosphereMesh);
 
   // ── Particle Field ────────────────────────────────────────
   const particleCount = 1800;
@@ -162,6 +291,15 @@ export function initScene() {
     mouseX += (targetMouseX - mouseX) * 0.04;
     mouseY += (targetMouseY - mouseY) * 0.04;
 
+    // ── Earth Globe rotation (independent and infinite) ──────
+    earthMesh.rotation.y = t * 0.12;
+    cloudMesh.rotation.y = t * 0.15; // Clouds rotate slightly faster for dynamic effect
+
+    // ── Update Sun direction in view space for shader ────────
+    const worldSunPos = new THREE.Vector3(5, 3, 5);
+    const viewSunDir = worldSunPos.clone().applyMatrix4(camera.matrixWorldInverse).normalize();
+    earthMat.uniforms.sunDirection.value.copy(viewSunDir);
+
     // ── Orb group: scroll drives rotation + Z movement ──────
     orbGroup.rotation.y = t * 0.08 + scrollProgress * Math.PI * 2.5;
     orbGroup.rotation.x = scrollProgress * Math.PI * 0.8 + mouseY * 0.15;
@@ -201,3 +339,4 @@ export function initScene() {
 
   return { scene, camera, renderer };
 }
+
