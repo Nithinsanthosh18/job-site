@@ -47,7 +47,7 @@ export function initScene() {
     opacity: 0.45,
     side: THREE.DoubleSide
   });
-  const ringGeo = new THREE.TorusGeometry(2.1, 0.012, 8, 200);
+  const ringGeo = new THREE.TorusGeometry(3.5, 0.018, 8, 200); // Widened and thickened for larger Earth
   const orbitRing = new THREE.Mesh(ringGeo, ringMat);
   orbitRing.rotation.x = 1.2;
   orbitRing.rotation.y = 0.15;
@@ -62,7 +62,7 @@ export function initScene() {
   dotPivot.rotation.x = 1.2; // Match the orbit ring tilt
   dotPivot.rotation.y = 0.15;
   dotPivot.add(orbDot);
-  orbDot.position.set(2.1, 0, 0); // Position directly on the ring radius
+  orbDot.position.set(3.5, 0, 0); // Position directly on the ring radius (3.5)
   orbGroup.add(dotPivot); // Nested inside orbGroup so it zooms and scales on scroll
 
   // Dot glow
@@ -158,13 +158,13 @@ export function initScene() {
   earthGroup.rotation.z = 0.41; // Tilt Earth's axis by 23.5 degrees
   orbGroup.add(earthGroup);
 
-  // Earth Globe Mesh (Increased size from 1.0 to 1.35)
-  const earthGeo = new THREE.SphereGeometry(1.35, 64, 64);
+  // Earth Globe Mesh (Increased size to 2.56)
+  const earthGeo = new THREE.SphereGeometry(2.56, 64, 64);
   const earthMesh = new THREE.Mesh(earthGeo, earthMat);
   earthGroup.add(earthMesh);
 
-  // Cloud Layer (Increased size from 1.015 to 1.365)
-  const cloudGeo = new THREE.SphereGeometry(1.365, 64, 64);
+  // Cloud Layer (Increased size to 2.59)
+  const cloudGeo = new THREE.SphereGeometry(2.59, 64, 64);
   const cloudMat = new THREE.MeshPhongMaterial({
     map: cloudsTex,
     transparent: true,
@@ -174,8 +174,8 @@ export function initScene() {
   const cloudMesh = new THREE.Mesh(cloudGeo, cloudMat);
   earthGroup.add(cloudMesh);
 
-  // Atmosphere Glow Layer (Increased size from 1.04 to 1.39)
-  const atmosphereGeo = new THREE.SphereGeometry(1.39, 64, 64);
+  // Atmosphere Glow Layer (Increased size to 2.63)
+  const atmosphereGeo = new THREE.SphereGeometry(2.63, 64, 64);
   const atmosphereMat = new THREE.ShaderMaterial({
     vertexShader: `
       varying vec3 vNormal;
@@ -205,7 +205,7 @@ export function initScene() {
   const sizes = new Float32Array(particleCount);
 
   for (let i = 0; i < particleCount; i++) {
-    const r = 3 + Math.random() * 14;
+    const r = 5.0 + Math.random() * 14.0; // Pushed outer boundary so stars spawn outside 2.56 Earth
     const theta = Math.random() * Math.PI * 2;
     const phi = Math.acos(2 * Math.random() - 1);
     positions[i * 3]     = r * Math.sin(phi) * Math.cos(theta);
