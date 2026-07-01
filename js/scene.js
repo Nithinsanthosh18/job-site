@@ -63,7 +63,7 @@ export function initScene() {
   dotPivot.add(moonDummy);
   orbGroup.add(dotPivot);
 
-  // 3D Moon Globe Mesh (Custom shader for ultra-smooth terminator day/night transition)
+  // 3D Moon Globe Mesh (Custom shader for symmetrical projection and smooth terminator day/night transition)
   const moonTex = new THREE.TextureLoader().load('assets/moon_texture.jpg');
   moonTex.colorSpace = THREE.SRGBColorSpace;
   const moonGeo = new THREE.SphereGeometry(0.42, 32, 32); 
@@ -76,11 +76,12 @@ export function initScene() {
       ambientIntensity: { value: 0.12 }
     },
     vertexShader: `
-      varying vec2 vUv;
+      varying vec2 vProjUv;
       varying vec3 vNormal;
       void main() {
-        vUv = uv;
         vNormal = normalize(normalMatrix * normal);
+        // Project texture on both front and back hemispheres symmetrically (avoids black back side)
+        vProjUv = normal.xy * 0.5 + vec2(0.5);
         gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
       }
     `,
@@ -91,7 +92,7 @@ export function initScene() {
       uniform vec3 ambientColor;
       uniform float ambientIntensity;
       
-      varying vec2 vUv;
+      varying vec2 vProjUv;
       varying vec3 vNormal;
       
       void main() {
@@ -102,13 +103,18 @@ export function initScene() {
         // Very wide smoothstep transition range (-0.5 to 0.5) for a super smooth terminator line
         float dayFactor = smoothstep(-0.5, 0.5, dotNL);
         
-        vec4 texColor = texture2D(moonTexture, vUv);
+        // Read the projected Moon texture
+        vec4 texColor = texture2D(moonTexture, vProjUv);
         
         float mainLight = max(dotNL, 0.0) * 1.25;
         float fillLightVal = max(dotFill, 0.0) * 0.4;
         
         vec4 dayColor = texColor * (mainLight + fillLightVal + 0.05);
-        vec4 nightColor = texColor * 0.03; // faint shadow details
+        
+        // Night color (back side / dark side is same as front but darker/shadowed)
+        vec4 nightColor = texColor * 0.05; 
+        
+        // Subtle violet ambient fill in shadows
         vec4 fillCol = vec4(ambientColor, 1.0) * ambientIntensity * (1.0 - dayFactor);
         
         gl_FragColor = mix(nightColor, dayColor, dayFactor) + fillCol;
@@ -345,23 +351,13 @@ export function initScene() {
     moonMesh.rotation.y = t * 0.90;  // Spin Moon mesh on its own Y-axis (significantly faster than Earth)
 
 
-    // ── Rotate the Sun and Fill light positions dynamically ──
-    const lightAngle = t * 0.25; // Revolve speed matching the Moon's orbit aesthetics
-    const worldSunPos = new THREE.Vector3(
-      6.0 * Math.cos(lightAngle),
-      3.5,
-      6.0 * Math.sin(lightAngle)
-    );
-    sunLight.position.copy(worldSunPos);
-
-    const worldFillPos = worldSunPos.clone().multiplyScalar(-1.0);
-    fillLight.position.copy(worldFillPos);
-
-    // Update shaders with view-space directions
+    // ── Update light directions in view space for shader ─────
+    const worldSunPos = new THREE.Vector3(5, 3, 5);
     const viewSunDir = worldSunPos.clone().applyMatrix4(camera.matrixWorldInverse).normalize();
     earthMat.uniforms.sunDirection.value.copy(viewSunDir);
     moonMat.uniforms.sunDirection.value.copy(viewSunDir);
 
+    const worldFillPos = new THREE.Vector3(-5, -2, -5);
     const viewFillDir = worldFillPos.clone().applyMatrix4(camera.matrixWorldInverse).normalize();
     earthMat.uniforms.fillDirection.value.copy(viewFillDir);
     moonMat.uniforms.fillDirection.value.copy(viewFillDir);
