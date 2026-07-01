@@ -281,9 +281,11 @@ export function initScene() {
     mouseX += (targetMouseX - mouseX) * 0.04;
     mouseY += (targetMouseY - mouseY) * 0.04;
 
-    // ── Earth Globe rotation (independent and infinite) ──────
+    // ── Earth & Moon Globe rotation (independent and infinite) ──────
     earthMesh.rotation.y = t * 0.12;
     cloudMesh.rotation.y = t * 0.15; // Clouds rotate slightly faster for dynamic effect
+    moonMesh.rotation.y = t * 0.25;  // Moon rotates on its own axis
+
 
     // ── Update light directions in view space for shader ─────
     const worldSunPos = new THREE.Vector3(5, 3, 5);
