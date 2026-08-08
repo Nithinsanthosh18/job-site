@@ -1,0 +1,111 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+  font-family: "Magnolia Script";
+  font-style: normal;
+  font-weight: 400;
+  src: url("/fonts/magnolia-script.woff") format("woff");
+  font-display: swap;
+}
+
+:root {
+  --void: #030308;
+  --space-blue: #090d16;
+  --galaxy-purple: #120b24;
+  --solar-orange: #ff7a1a;
+  --solar-gold: #f5c563;
+  --cosmic-cyan: #00f0ff;
+  --scrollbar-track: #030308;
+  --font-display: "Magnolia Script", "Orbitron", cursive, sans-serif;
+  --font-body: "Outfit", "Manrope", sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: auto;
+  background: var(--void);
+  color-scheme: dark;
+}
+
+body {
+  cursor: default;
+  background-color: #030308;
+  font-family: var(--font-body);
+}
+
+::selection {
+  background: var(--solar-orange);
+  color: #000000;
+}
+
+::-webkit-scrollbar {
+  width: 5px;
+}
+::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+}
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(var(--solar-orange), var(--solar-gold));
+  border-radius: 4px;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+.no-scrollbar {
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+
+.eyebrow {
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
+  font-size: 0.7rem;
+  color: var(--solar-gold);
+  font-family: var(--font-display);
+}
+
+.glass-panel {
+  background: linear-gradient(
+    145deg,
+    rgba(15, 20, 32, 0.85),
+    rgba(3, 5, 12, 0.95)
+  );
+  border: 1px solid rgba(245, 197, 99, 0.25);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+}
+
+.text-gradient-gold {
+  background: linear-gradient(90deg, #ffffff, var(--solar-gold), #ff7a1a);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.hud-border {
+  border: 1px solid rgba(0, 240, 255, 0.3);
+  box-shadow: 0 0 15px rgba(0, 240, 255, 0.15);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
