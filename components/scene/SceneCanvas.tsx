@@ -3,8 +3,6 @@
 import { Suspense } from "react";
 import { Canvas } from "@react-three/fiber";
 import { EffectComposer, Bloom, Vignette } from "@react-three/postprocessing";
-import SpaceBackground from "./SpaceBackground";
-import Starfield from "./Starfield";
 import Sun from "./Sun";
 import Planet from "./Planet";
 import OrbitRing from "./OrbitRing";
@@ -26,8 +24,6 @@ export default function SceneCanvas() {
       <directionalLight position={[15, 20, 25]} intensity={0.6} color="#ffffff" />
 
       <Suspense fallback={null}>
-        <SpaceBackground />
-        <Starfield />
         <Sun />
         {/* Render all concentric orbit rings centered around the Sun */}
         {PLANETS.map((p) => (

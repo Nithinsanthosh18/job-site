@@ -16,7 +16,7 @@ interface Keyframe {
 
 // Section keyframes for camera navigation
 const SEGMENTS: Keyframe[] = [
-  // 0 — Hero Intro: Zoomed Sun filling top/bottom & right edge
+  // 0 — Hero Intro: Half of the Sun placed on the right side
   {
     position: () => new THREE.Vector3(-6.5, 0, 10.0),
     lookAt: () => new THREE.Vector3(-5.0, 0, 0),
