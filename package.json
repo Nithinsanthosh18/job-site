@@ -9,7 +9,6 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@next/swc-win32-x64-msvc": "^14.2.33",
     "@react-three/drei": "^9.109.2",
     "@react-three/fiber": "^8.17.5",
     "@react-three/postprocessing": "^2.16.2",
