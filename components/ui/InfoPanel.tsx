@@ -321,6 +321,9 @@ function ContactContent() {
         <p className="flex items-center gap-2">
           <span>✉️</span> <a href="mailto:theorbiscontact@gmail.com" className="hover:text-solar-gold transition-colors">theorbiscontact@gmail.com</a>
         </p>
+        <p className="flex items-center gap-2">
+          <span>📸</span> <a href="https://www.instagram.com/orbis.technologies?igsh=MXFxd2M2NTIxcTU2dw==" target="_blank" rel="noopener noreferrer" className="hover:text-solar-gold transition-colors">@orbis.technologies (Instagram)</a>
+        </p>
       </div>
 
       <div className="glass-panel p-6 rounded-2xl">
