@@ -1,10 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import Image from "next/image";
 import { useOrbisStore } from "@/lib/store";
 import {
   SERVICES,
+  SERVICE_CATEGORIES,
   TECHNOLOGIES,
   CAPABILITIES,
   SUPPORT,
@@ -192,20 +194,95 @@ function AboutContent() {
 }
 
 function ServicesContent() {
+  const [openIds, setOpenIds] = useState<string[]>(["software-web"]);
+
+  const toggleCategory = (id: string) => {
+    setOpenIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
+  };
+
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-      {SERVICES.map((s, i) => (
-        <motion.div
-          key={s}
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: i * 0.03 }}
-          className="glass-panel rounded-xl p-4 text-xs sm:text-sm text-white/90 hover:border-solar-gold/50 transition-colors flex items-center gap-2.5"
-        >
-          <span className="text-solar-gold">✦</span>
-          <span>{s}</span>
-        </motion.div>
-      ))}
+    <div className="space-y-3">
+      {SERVICE_CATEGORIES.map((cat) => {
+        const isOpen = openIds.includes(cat.id);
+
+        return (
+          <div
+            key={cat.id}
+            className={`glass-panel rounded-2xl overflow-hidden border transition-all duration-300 ${
+              isOpen
+                ? "border-solar-gold/60 shadow-[0_0_25px_rgba(245,197,99,0.15)] bg-white/5"
+                : "border-white/10 hover:border-solar-gold/40"
+            }`}
+          >
+            {/* Header Bar */}
+            <button
+              onClick={() => toggleCategory(cat.id)}
+              className="w-full flex items-center justify-between p-3.5 sm:p-4 text-left cursor-pointer select-none transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <span className="text-xl sm:text-2xl shrink-0 p-2 rounded-xl bg-white/5 border border-white/10">
+                  {cat.icon}
+                </span>
+                <div>
+                  <h3 className="font-display text-sm sm:text-base font-semibold text-white">
+                    {cat.title}
+                  </h3>
+                  <p className="text-[10px] sm:text-[11px] text-solar-gold/80 mt-0.5 tracking-wider font-mono">
+                    {cat.items.length} Services
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2.5">
+                <span className="text-[11px] px-2.5 py-1 rounded-full border border-white/10 bg-white/5 text-white/70 font-mono hidden sm:inline-block">
+                  {isOpen ? "Collapse" : "Expand"}
+                </span>
+                <motion.span
+                  animate={{ rotate: isOpen ? 180 : 0 }}
+                  transition={{ duration: 0.25 }}
+                  className="text-solar-gold font-bold text-sm"
+                >
+                  ▼
+                </motion.span>
+              </div>
+            </button>
+
+            {/* Expandable Body */}
+            <AnimatePresence initial={false}>
+              {isOpen && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+                  className="overflow-hidden"
+                >
+                  <div className="p-3.5 pt-1 sm:p-4 sm:pt-1 border-t border-white/10 grid grid-cols-1 sm:grid-cols-2 gap-2 bg-black/25">
+                    {cat.items.map((item, itemIdx) => (
+                      <motion.div
+                        key={item}
+                        initial={{ opacity: 0, y: 6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: itemIdx * 0.02 }}
+                        className="flex items-center gap-2.5 p-2.5 rounded-xl bg-white/5 border border-white/10 hover:border-solar-gold/50 hover:bg-solar-gold/10 transition-all group"
+                      >
+                        <span className="text-solar-gold text-xs group-hover:scale-125 transition-transform">
+                          ✦
+                        </span>
+                        <span className="text-xs sm:text-sm text-white/90 font-medium">
+                          {item}
+                        </span>
+                      </motion.div>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        );
+      })}
     </div>
   );
 }

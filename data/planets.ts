@@ -165,20 +165,114 @@ export const PLANETS: PlanetDef[] = [
   },
 ];
 
-export const SERVICES = [
-  "Web Development",
-  "AI Development",
-  "Machine Learning",
-  "LLM Solutions",
-  "Automation",
-  "Cloud",
-  "API Integration",
-  "Mobile Apps",
-  "UI / UX Design",
-  "Blockchain",
-  "Cyber Security",
-  "Data Analytics",
+export interface ServiceCategory {
+  id: string;
+  icon: string;
+  title: string;
+  items: string[];
+}
+
+export const SERVICE_CATEGORIES: ServiceCategory[] = [
+  {
+    id: "software-web",
+    icon: "💻",
+    title: "Software & Web Development",
+    items: [
+      "Website development",
+      "E-commerce websites",
+      "Portfolio/business websites",
+      "Web applications",
+      "Admin dashboards",
+      "API development",
+      "Database development",
+    ],
+  },
+  {
+    id: "mobile-app",
+    icon: "📱",
+    title: "Mobile App Development",
+    items: [
+      "Android apps",
+      "Cross-platform apps",
+      "UI/UX design",
+      "Firebase integration",
+      "Payment integration",
+      "Real-time applications",
+    ],
+  },
+  {
+    id: "ai-ml",
+    icon: "🤖",
+    title: "AI & Machine Learning",
+    items: [
+      "AI chatbot development",
+      "LLM & Generative AI applications",
+      "RAG-based chatbots",
+      "Computer vision systems",
+      "Object detection using YOLO",
+      "Image classification",
+      "OCR systems",
+      "Face/object recognition",
+      "Predictive ML models",
+      "AI automation",
+    ],
+  },
+  {
+    id: "ui-ux-graphics",
+    icon: "🎨",
+    title: "UI/UX & Graphics",
+    items: [
+      "UI/UX design",
+      "Website/app prototypes",
+      "Logo design",
+      "Branding",
+      "Social-media designs",
+      "3D modeling",
+      "3D animations",
+      "Product visualization",
+    ],
+  },
+  {
+    id: "creative-3d",
+    icon: "🎬",
+    title: "Creative & 3D",
+    items: [
+      "Blender 3D modeling",
+      "3D product models",
+      "3D animations",
+    ],
+  },
+  {
+    id: "automation-data",
+    icon: "⚙️",
+    title: "Automation & Data",
+    items: [
+      "Excel automation",
+      "Data analysis",
+      "Web scraping",
+      "Report generation",
+      "Business dashboards",
+      "Workflow automation",
+      "Python automation",
+    ],
+  },
+  {
+    id: "deployment-tech",
+    icon: "☁️",
+    title: "Deployment & Technical Services",
+    items: [
+      "Cloud deployment",
+      "Website hosting",
+      "Database setup",
+      "API deployment",
+      "Git/GitHub setup",
+      "Domain integration",
+      "Maintenance & bug fixing",
+    ],
+  },
 ];
+
+export const SERVICES = SERVICE_CATEGORIES.flatMap((c) => c.items);
 
 export const TECHNOLOGIES = [
   "Python",
